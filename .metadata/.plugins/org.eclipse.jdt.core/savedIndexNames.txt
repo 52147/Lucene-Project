@@ -1,0 +1,12 @@
+INDEX VERSION 1.131+C:\Users\debra\Downloads\LuceneExamples\.metadata\.plugins\org.eclipse.jdt.core
+968804215.index
+4280986322.index
+1865797976.index
+1167275426.index
+617407165.index
+3776420604.index
+756359609.index
+452330255.index
+585559710.index
+1209790194.index
+2505559112.index

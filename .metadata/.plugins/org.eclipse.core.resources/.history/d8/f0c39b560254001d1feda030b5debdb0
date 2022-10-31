@@ -1,0 +1,157 @@
+package com.howtodoinjava.demo.lucene.file;
+
+import java.io.IOException;
+import java.nio.file.Paths;
+
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.highlight.TokenSources;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+
+public class LuceneReadIndexFromFileExample {
+	// directory contains the lucene indexes
+	private static final String INDEX_DIR = "indexedFiles";
+
+	public static void main(String[] args) throws Exception {
+		long start = System.currentTimeMillis();
+		// ...
+
+		// Implements search over a single IndexReader.
+		IndexSearcher searcher = createSearcher();
+
+		// Search indexed contents using search term
+		TopDocs foundDocs = searchInContent("Conversational Agent", searcher);
+
+		// Total found documents
+		System.out.println("Total Number of Files that found Conversational Agent: " + foundDocs.totalHits);
+
+		// Iterate over found results
+		for (int i = 0; i < foundDocs.scoreDocs.length; i++) {
+			int docid = foundDocs.scoreDocs[i].doc;
+			Document doc = searcher.doc(docid);
+			String title = doc.get("path");
+			System.out.println("Conversational Agent " + docid + " times");
+
+			// Printing - to which document result belongs
+			System.out.println("Path " + " : " + title);
+
+		}
+		long finish = System.currentTimeMillis();
+		long timeElapsed = finish - start;
+		System.out.println("Response Time for Conversational Agent" + timeElapsed);
+
+		System.out.println();
+		// Implements search over a single IndexReader.
+		IndexSearcher searcher2 = createSearcher();
+
+		// Search indexed contents using search term
+		TopDocs foundDocs2 = searchInContent("Chatbot", searcher2);
+
+		// Total found documents
+		System.out.println("Total Number of Files that found Chatbot: " + foundDocs2.totalHits);
+
+		// Iterate over found results
+		for (int i = 0; i < foundDocs2.scoreDocs.length; i++) {
+			int docid = foundDocs2.scoreDocs[i].doc;
+			Document doc = searcher2.doc(docid);
+			String title = doc.get("path");
+			System.out.println("Chatbot " + docid + " times");
+
+			// Printing - to which document result belongs
+			System.out.println("Path " + " : " + title);
+
+			// Get stored text from found document
+			String text = doc.get("contents");
+
+		}
+
+		// print out the path of files which have searched term
+		for (ScoreDoc sd : foundDocs2.scoreDocs) {
+			Document d = searcher2.doc(sd.doc);
+			System.out.println("Path : " + d.get("path") + ", Score : " + sd.score);
+		}
+		System.out.println();
+		// Implements search over a single IndexReader.
+		IndexSearcher searcher3 = createSearcher();
+
+		// Search indexed contents using search term
+		TopDocs foundDocs3 = searchInContent("Personal Assistant", searcher3);
+
+		// Total found documents
+		System.out.println("Total Number of Files that found Personal Assistant: " + foundDocs3.totalHits);
+
+		// Iterate over found results
+		for (int i = 0; i < foundDocs3.scoreDocs.length; i++) {
+			int docid = foundDocs3.scoreDocs[i].doc;
+			Document doc = searcher3.doc(docid);
+			String title = doc.get("path");
+			System.out.println("Personal Assistant " + docid + " times");
+
+			// Printing - to which document result belongs
+			System.out.println("Path " + " : " + title);
+
+			// Get stored text from found document
+			String text = doc.get("contents");
+
+		}
+		System.out.println();
+		// Implements search over a single IndexReader.
+		IndexSearcher searcher4 = createSearcher();
+
+		// Search indexed contents using search term
+		TopDocs foundDocs4 = searchInContent("Smart Speaker", searcher4);
+
+		// Total found documents
+		System.out.println("Total Number of Files that found Smart Speaker: " + foundDocs4.totalHits);
+
+		// Iterate over found results
+		for (int i = 0; i < foundDocs4.scoreDocs.length; i++) {
+			int docid = foundDocs4.scoreDocs[i].doc;
+			Document doc = searcher4.doc(docid);
+			String title = doc.get("path");
+			System.out.println("Smart Speaker " + docid + " times");
+
+			// Printing - to which document result belongs
+			System.out.println("Path " + " : " + title);
+
+			// Get stored text from found document
+			String text = doc.get("contents");
+
+		}
+	}
+
+	private static TopDocs searchInContent(String textToFind, IndexSearcher searcher) throws Exception {
+		// QueryParser(String f, Analyzer a)
+		// f - the default field for query terms.
+		// a - used to find terms in the query text.
+		QueryParser qp = new QueryParser("contents", new StandardAnalyzer());
+		Query query = qp.parse(textToFind);
+
+		// Finds the top n hits for query.
+		TopDocs hits = searcher.search(query, 10);
+		return hits;
+	}
+
+	private static IndexSearcher createSearcher() throws IOException {
+		Directory dir = FSDirectory.open(Paths.get(INDEX_DIR));
+
+		// IndexReader is an abstract class, providing an interface for accessing
+		// apoint-in-time view of an index
+		// DirectoryReader is an implementation of CompositeReader that can read indexes
+		// in a Directory.
+		IndexReader reader = DirectoryReader.open(dir);
+
+		// search over a single IndexReader.
+		IndexSearcher searcher = new IndexSearcher(reader);
+		return searcher;
+	}
+}

@@ -1,0 +1,119 @@
+package com.howtodoinjava.demo.lucene.file;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+ 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+ 
+public class LuceneWriteIndexFromFileExample 
+{
+    public static void main(String[] args)
+    {
+        //Input file: contain all text files which we want to index
+        String docsPath = "inputFiles";
+         
+        //Output file: contain lucene indexed documents. We will search the index inside it.
+        String indexPath = "indexedFiles";
+ 
+        //Input Path Variable
+        final Path docDir = Paths.get(docsPath);
+ 
+        try
+        {
+            Directory dir = FSDirectory.open( Paths.get(indexPath) );
+             
+            //Builds an analyzer with the stop words from the given reader.
+            Analyzer analyzer = new StandardAnalyzer();
+             
+            //Creates a new config that with the provided Analyzer.
+            IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+            
+            // setOpenMode(IndexWriterConfig.OpenMode openMode): Specifies IndexWriterConfig.OpenMode of the index.
+            // CREATE_OR_APPEND: Creates a new index if one does not exist, otherwise it opens the index and documents will be appended.
+            iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+             
+            //IndexWriter writes new index files to the directory
+            IndexWriter writer = new IndexWriter(dir, iwc);
+             
+            //recursive method to iterate all files and directories
+            indexDocs(writer, docDir);
+            // Closes all open resources and releases the write lock.
+            writer.close();
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+    }
+     
+    static void indexDocs(final IndexWriter writer, Path path) throws IOException 
+    {
+        //Directory
+        if (Files.isDirectory(path)) 
+        {
+            //Iterate directory
+            Files.walkFileTree(path, new SimpleFileVisitor<Path>() 
+            {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException 
+                {
+                    try
+                    {
+                        //Index this file
+                        indexDoc(writer, file, attrs.lastModifiedTime().toMillis());
+                    } 
+                    catch (IOException ioe) 
+                    {
+                        ioe.printStackTrace();
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } 
+        else
+        {
+            //Index this file
+            indexDoc(writer, path, Files.getLastModifiedTime(path).toMillis());
+        }
+    }
+ 
+    static void indexDoc(IndexWriter writer, Path file, long lastModified) throws IOException 
+    {
+        try (InputStream stream = Files.newInputStream(file)) 
+        {
+            //Create lucene Document
+            Document doc = new Document();
+            // Adds a field to a document. 
+            // Several fields may be added with the same name. 
+            // In this case, if the fields are indexed, their text is treated as though appended for the purposes of search.
+            doc.add(new StringField("path", file.toString(), Field.Store.YES));
+            doc.add(new LongPoint("modified", lastModified));
+            doc.add(new TextField("contents", new String(Files.readAllBytes(file)), Store.YES));
+             
+            //Updates a document by first deleting the document(s) 
+            //containing <code>term</code> and then adding the new
+            //document.  The delete and then add are atomic as seen
+            //by a reader on the same index
+            writer.updateDocument(new Term("path", file.toString()), doc);
+        }
+    }
+}
