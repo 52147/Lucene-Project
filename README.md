@@ -105,7 +105,7 @@ And at Order and Export, we need to seclet all jar files and apply.
 - Reference
 - https://stackoverflow.com/a/68717768/19462556
 
-## GitHub
+## Permission denied (publickey).
 ```
 > git push -u origin main
 Permission denied (publickey).
